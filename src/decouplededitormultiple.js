@@ -84,7 +84,7 @@ export default class DecoupledEditorMultiple extends Editor {
 				editables.push( [ name, sourceElement ] );
 				this._sourceElements.push( sourceElement );
 			} else {
-				// TODO handle if data was passed instead of elements
+				editables.push( [ name, null ] );
 			}
 		}
 
@@ -128,7 +128,7 @@ export default class DecoupledEditorMultiple extends Editor {
 
 		return super.destroy()
 			.then( () => {
-				if ( this._sourceElements ) {
+				if ( this._sourceElements.length ) {
 					for ( let i = 0; i < this._rootNames.length; i++ ) {
 						setDataInElement( this._sourceElements[ i ], data[ this._rootNames[ i ] ] );
 					}
@@ -148,9 +148,16 @@ export default class DecoupledEditorMultiple extends Editor {
 	}
 
 	// TODO docs
-	// setData() {
-	// 	// TODO
-	// }
+	setData( data ) {
+		const roots = Object.keys( data );
+		for ( const root of roots ) {
+			if ( !this._rootNames.includes( root ) ) {
+				throw new Error( `The "${ root }" root is not present.` );
+			}
+
+			this.data.set( data[ root ], root );
+		}
+	}
 
 	/**
 	 * Creates a decoupled editor instance.

@@ -24,8 +24,8 @@ let editor, editable, observer;
 function initEditor() {
 	DecoupledEditorMultiple
 		.create( {
-			main: '<h1>Foo</h1><p>Bar</p>',
-			main2: '<h1>Baz</h1><p>123 456</p>'
+			main: document.querySelector( '.editable-container.c1 > div' ),
+			main2: document.querySelector( '.editable-container.c2 > div' )
 		}, {
 			plugins: [ Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough, Alignment, List, Link, Table ],
 			toolbar: [ 'heading', '|', 'bold', 'italic', 'underline', 'strikethrough', 'alignment', 'link',
@@ -35,12 +35,7 @@ function initEditor() {
 			console.log( 'Editor was initialized', newEditor );
 			console.log( 'You can now play with it using global `editor` and `editable` variables.' );
 
-			document.querySelector( '.editable-container.c1' ).innerHTML = '';
-			document.querySelector( '.editable-container.c2' ).innerHTML = '';
-
 			document.querySelector( '.toolbar-container' ).appendChild( newEditor.ui.view.toolbar.element );
-			document.querySelector( '.editable-container.c1' ).appendChild( newEditor.ui.view.editables[ 0 ].element );
-			document.querySelector( '.editable-container.c2' ).appendChild( newEditor.ui.view.editables[ 1 ].element );
 
 			window.editor = editor = newEditor;
 			window.editable = editable = editor.editing.view.document.getRoot();
@@ -63,12 +58,6 @@ function destroyEditor() {
 			observer = null;
 
 			document.querySelector( '.toolbar-container' ).innerHTML = '';
-
-			const element1 = document.querySelector( '.editable-container.c1' );
-			const element2 = document.querySelector( '.editable-container.c2' );
-
-			element1.innerHTML = element1.querySelector( 'div' ).innerHTML;
-			element2.innerHTML = element2.querySelector( 'div' ).innerHTML;
 
 			console.log( 'Editor was destroyed' );
 		} );

@@ -49,8 +49,6 @@ export default class DecoupledEditorMultipleUI extends EditorUI {
 
 			editor.editing.view.attachDomRoot( editable.element, editable.name );
 
-			console.log( editable.element );
-
 			this.focusTracker.add( editable.element );
 		}
 
