@@ -4,17 +4,18 @@
  */
 
 /**
- * @module editor-decoupled/decouplededitor
+ * @module editor-decoupled/multirooteditor
  */
 
 import Editor from '@ckeditor/ckeditor5-core/src/editor/editor';
 import DataApiMixin from '@ckeditor/ckeditor5-core/src/editor/utils/dataapimixin';
 import HtmlDataProcessor from '@ckeditor/ckeditor5-engine/src/dataprocessor/htmldataprocessor';
-import DecoupledEditorMultipleUI from './decouplededitormultipleui';
-import DecoupledEditorMultipleUIView from './decouplededitormultipleuiview';
+import MultiRootEditorUI from './multirooteditorui';
+import MultiRootEditorUIView from './multirooteditoruiview';
 import getDataFromElement from '@ckeditor/ckeditor5-utils/src/dom/getdatafromelement';
 import setDataInElement from '@ckeditor/ckeditor5-utils/src/dom/setdatainelement';
 import mix from '@ckeditor/ckeditor5-utils/src/mix';
+import log from '@ckeditor/ckeditor5-utils/src/log';
 import { isElement } from 'lodash-es';
 
 /**
@@ -49,7 +50,7 @@ import { isElement } from 'lodash-es';
  * @implements module:core/editor/editorwithui~EditorWithUI
  * @extends module:core/editor/editor~Editor
  */
-export default class DecoupledEditorMultiple extends Editor {
+export default class MultiRootEditor extends Editor {
 	/**
 	 * Creates an instance of the decoupled editor.
 	 *
@@ -65,28 +66,29 @@ export default class DecoupledEditorMultiple extends Editor {
 	constructor( sourceElementsOrData, config ) {
 		super( config );
 
-		this._rootNames = [];
 		this._sourceElements = [];
+		this._rootNames = Object.keys( sourceElementsOrData );
 
 		this.data.processor = new HtmlDataProcessor();
 
 		const editables = [];
-		const names = this._rootNames = Object.keys( sourceElementsOrData );
 
-		for ( const name of names ) {
-			const sourceElement = sourceElementsOrData[ name ];
+		for ( const name of this._rootNames ) {
+			const sourceElementOrData = sourceElementsOrData[ name ];
 
 			this.model.document.createRoot( '$root', name );
 
-			if ( isElement( sourceElement ) ) {
-				editables.push( [ name, sourceElement ] );
+			let sourceElement = null;
+
+			if ( isElement( sourceElementOrData ) ) {
+				sourceElement = sourceElementOrData;
 				this._sourceElements.push( sourceElement );
-			} else {
-				editables.push( [ name, null ] );
 			}
+
+			editables.push( { name, sourceElement } );
 		}
 
-		this.ui = new DecoupledEditorMultipleUI( this, new DecoupledEditorMultipleUIView( this.locale, editables ) );
+		this.ui = new MultiRootEditorUI( this, new MultiRootEditorUIView( this.locale, editables ) );
 	}
 
 	/**
@@ -148,12 +150,14 @@ export default class DecoupledEditorMultiple extends Editor {
 	// TODO docs
 	setData( data ) {
 		const roots = Object.keys( data );
+
 		for ( const root of roots ) {
 			if ( !this._rootNames.includes( root ) ) {
-				throw new Error( `The "${ root }" root is not present.` );
+				// TODO docs
+				log.warn( `setting-data-on-non-existing-root: Trying to set data on non existing "${ root }" root.` );
+			} else {
+				this.data.set( data[ root ], root );
 			}
-
-			this.data.set( data[ root ], root );
 		}
 	}
 
@@ -243,22 +247,21 @@ export default class DecoupledEditorMultiple extends Editor {
 						const names = Object.keys( sourceElementsOrData );
 
 						for ( const name of names ) {
-							const rootName = name;
-							const sourceElement = sourceElementsOrData[ name ];
-							const initialData = isElement( sourceElement ) ?
-								getDataFromElement( sourceElement ) :
-								sourceElement;
+							const sourceElementOrData = sourceElementsOrData[ name ];
+							const initialData = isElement( sourceElementOrData ) ?
+								getDataFromElement( sourceElementOrData ) :
+								sourceElementOrData;
 
 							// Do not use `editor.data.set( initialData, rootName )` in a loop, because first `#set` call
 							// will empty all others root so data cannot be retrieved from them.
-							initElementsData.push( [ initialData, rootName ] );
+							initElementsData.push( { initialData, name } );
 						}
 
 						// Initiating data on one root changes document version and then when setting on another
 						// error is thrown, see engine/controller/datacontroller#init. Instead engine/controller/datacontroller#set
 						// can be used however I'm not sure how it plays with undo (it uses `transparent` batch so no undo
 						// step should be created).
-						return Promise.all( initElementsData.map( item => editor.data.set( item[ 0 ], item[ 1 ] ) ) );
+						return Promise.all( initElementsData.map( item => editor.data.set( item.initialData, item.name ) ) );
 					} )
 					.then( () => {
 						editor.fire( 'dataReady' );
@@ -270,4 +273,4 @@ export default class DecoupledEditorMultiple extends Editor {
 	}
 }
 
-mix( DecoupledEditorMultiple, DataApiMixin );
+mix( MultiRootEditor, DataApiMixin );

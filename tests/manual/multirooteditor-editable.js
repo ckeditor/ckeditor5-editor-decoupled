@@ -5,7 +5,7 @@
 
 /* globals console:false, document, window */
 
-import DecoupledEditorMultiple from '../../src/decouplededitormultiple';
+import MultiRootEditor from '../../src/multirooteditor';
 import Essentials from '@ckeditor/ckeditor5-essentials/src/essentials';
 import Heading from '@ckeditor/ckeditor5-heading/src/heading';
 import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
@@ -19,13 +19,14 @@ import Link from '@ckeditor/ckeditor5-link/src/link';
 import Table from '@ckeditor/ckeditor5-table/src/table';
 import testUtils from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
 
-let editor, editable, observer;
+let editor, observer;
 
 function initEditor() {
-	DecoupledEditorMultiple
+	MultiRootEditor
 		.create( {
-			main: '<h1>Foo</h1><p>Bar</p>',
-			main2: '<h1>Baz</h1><p>123 456</p>'
+			title: document.querySelector( '.editable-container.title > div' ),
+			c1: document.querySelector( '.editable-container.c1 > div' ),
+			c2: document.querySelector( '.editable-container.c2 > div' )
 		}, {
 			plugins: [ Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough, Alignment, List, Link, Table ],
 			toolbar: [ 'heading', '|', 'bold', 'italic', 'underline', 'strikethrough', 'alignment', 'link',
@@ -35,18 +36,14 @@ function initEditor() {
 			console.log( 'Editor was initialized', newEditor );
 			console.log( 'You can now play with it using global `editor` and `editable` variables.' );
 
-			document.querySelector( '.editable-container.c1' ).innerHTML = '';
-			document.querySelector( '.editable-container.c2' ).innerHTML = '';
-
 			document.querySelector( '.toolbar-container' ).appendChild( newEditor.ui.view.toolbar.element );
-			document.querySelector( '.editable-container.c1' ).appendChild( newEditor.ui.view.editables[ 0 ].element );
-			document.querySelector( '.editable-container.c2' ).appendChild( newEditor.ui.view.editables[ 1 ].element );
 
 			window.editor = editor = newEditor;
-			window.editable = editable = editor.editing.view.document.getRoot();
 
 			observer = testUtils.createObserver();
-			observer.observe( 'Editable', editable, [ 'isFocused' ] );
+			observer.observe( 'Editable:title', editor.editing.view.document.getRoot( 'title' ), [ 'isFocused' ] );
+			observer.observe( 'Editable:c1', editor.editing.view.document.getRoot( 'c1' ), [ 'isFocused' ] );
+			observer.observe( 'Editable:c2', editor.editing.view.document.getRoot( 'c2' ), [ 'isFocused' ] );
 		} )
 		.catch( err => {
 			console.error( err.stack );
@@ -57,18 +54,11 @@ function destroyEditor() {
 	editor.destroy()
 		.then( () => {
 			window.editor = editor = null;
-			window.editable = editable = null;
 
 			observer.stopListening();
 			observer = null;
 
 			document.querySelector( '.toolbar-container' ).innerHTML = '';
-
-			const element1 = document.querySelector( '.editable-container.c1' );
-			const element2 = document.querySelector( '.editable-container.c2' );
-
-			element1.innerHTML = element1.querySelector( 'div' ).innerHTML;
-			element2.innerHTML = element2.querySelector( 'div' ).innerHTML;
 
 			console.log( 'Editor was destroyed' );
 		} );

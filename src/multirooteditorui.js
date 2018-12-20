@@ -16,7 +16,7 @@ import normalizeToolbarConfig from '@ckeditor/ckeditor5-ui/src/toolbar/normalize
  *
  * @extends module:core/editor/editorui~EditorUI
  */
-export default class DecoupledEditorMultipleUI extends EditorUI {
+export default class MultiRootEditor extends EditorUI {
 	/**
 	 * @inheritDoc
 	 */

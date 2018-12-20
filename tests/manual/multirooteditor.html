@@ -3,17 +3,16 @@
 	<button id="initEditor">Init editor</button>
 </p>
 
-<h2>The toolbar</h2>
-<div class="toolbar-container"></div>
+<div class="toolbar-container" data-name="Toolbar"></div>
+
+<div class="editable-container title" data-name="Title"></div>
 
 <div class="wrapper">
-	<h2>The editable</h2>
-	<div class="editable-container c1"></div>
+	<div class="editable-container c1" data-name="Editable 1"></div>
 </div>
 
 <div class="wrapper">
-	<h2>The editable2</h2>
-	<div class="editable-container c2"></div>
+	<div class="editable-container c2" data-name="Editable 2"></div>
 </div>
 
 
@@ -36,6 +35,18 @@
 		padding: .1em .3em;
 	}
 
+	.editable-container::before,
+	.toolbar-container::before {
+		content: attr(data-name);
+		position: absolute;
+		background: blue;
+		color: #fff;
+		top: 0;
+		left: 0;
+		font: 10px/2 monospace;
+		padding: .1em .3em;
+	}
+
 	.toolbar-container{
 		padding: 1em;
 	}
@@ -44,9 +55,10 @@
 		padding: 3em;
 		overflow-y: scroll;
 		max-height: 300px;
+		margin-top: 25px;
 	}
 
-	.editable-container .ck-editor__editable {
+	.editable-container:not(.title) .ck-editor__editable {
 		min-height: 21cm;
 		padding: 2em;
 		border: 1px #D3D3D3 solid;
@@ -58,9 +70,10 @@
 	.wrapper {
 		width: 49%;
 		float: left;
+		margin-right: 2%;
 	}
 
-	.wrapper > h2 {
-		text-align: center;
+	.wrapper + .wrapper {
+		margin-right: 0;
 	}
 </style>

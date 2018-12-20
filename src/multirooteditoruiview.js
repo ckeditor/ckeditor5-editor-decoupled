@@ -23,7 +23,7 @@ import Template from '@ckeditor/ckeditor5-ui/src/template';
  *
  * @extends module:ui/editorui/editoruiview~EditorUIView
  */
-export default class DecoupledEditorMultipleUIView extends EditorUIView {
+export default class MultiRootEditorUIView extends EditorUIView {
 	/**
 	 * Creates an instance of the decoupled editor UI view.
 	 *
@@ -49,8 +49,8 @@ export default class DecoupledEditorMultipleUIView extends EditorUIView {
 		 * @member {module:ui/editableui/inline/inlineeditableuiview~InlineEditableUIView}
 		 */
 		this.editables = editables.map( item => {
-			const view = new InlineEditableUIView( locale, item[ 1 ] );
-			view.name = item[ 0 ];
+			const view = new InlineEditableUIView( locale, item.sourceElement );
+			view.name = item.name;
 			return view;
 		} );
 
