@@ -37,18 +37,21 @@ export default class DecoupledEditorUI extends EditorUI {
 	 */
 	init() {
 		const editor = this.editor;
-		const view = this.view;
+		const mainView = this.view;
 
-		view.render();
+		mainView.render();
 
-		// Set up the editable.
-		const editingRoot = editor.editing.view.document.getRoot();
-		view.editable.bind( 'isReadOnly' ).to( editingRoot );
-		view.editable.bind( 'isFocused' ).to( editor.editing.view.document );
-		editor.editing.view.attachDomRoot( view.editableElement );
-		view.editable.name = editingRoot.rootName;
+		for ( const editable of mainView.editables ) {
+			// Set up editables.
+			const editingRoot = editor.editing.view.document.getRoot( editable.name );
+			editable.bind( 'isReadOnly' ).to( editingRoot );
+			editable.bind( 'isFocused' ).to( editor.editing.view.document );
 
-		this.focusTracker.add( this.view.editableElement );
+			editor.editing.view.attachDomRoot( editable.element, editable.name );
+
+			this.focusTracker.add( editable.element );
+		}
+
 		this.view.toolbar.fillFromConfig( this._toolbarConfig.items, this.componentFactory );
 
 		enableToolbarKeyboardFocus( {
@@ -57,5 +60,13 @@ export default class DecoupledEditorUI extends EditorUI {
 			originKeystrokeHandler: editor.keystrokes,
 			toolbar: this.view.toolbar
 		} );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	destroy() {
+		this.stopListening();
+		this.view.destroy();
 	}
 }

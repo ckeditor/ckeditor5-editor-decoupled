@@ -14,7 +14,7 @@ import Template from '@ckeditor/ckeditor5-ui/src/template';
 
 /**
  * The decoupled editor UI view. It is a virtual view providing an inline
- * {@link module:editor-decoupled/decouplededitoruiview~DecoupledEditorUIView#editable} and a
+ * {@link module:editor-decoupled/decouplededitoruiview~DecoupledEditorUIView#editable editables} and a
  * {@link module:editor-decoupled/decouplededitoruiview~DecoupledEditorUIView#toolbar}, but without any
  * specific arrangement of the components in the DOM.
  *
@@ -31,7 +31,7 @@ export default class DecoupledEditorUIView extends EditorUIView {
 	 * @param {HTMLElement} [editableElement] The editable element. If not specified, it will be automatically created by
 	 * {@link module:ui/editableui/editableuiview~EditableUIView}. Otherwise, the given element will be used.
 	 */
-	constructor( locale, editableElement ) {
+	constructor( locale, editables ) {
 		super( locale );
 
 		/**
@@ -43,12 +43,16 @@ export default class DecoupledEditorUIView extends EditorUIView {
 		this.toolbar = new ToolbarView( locale );
 
 		/**
-		 * The editable of the decoupled editor UI.
+		 * The editables of the decoupled editor UI.
 		 *
 		 * @readonly
 		 * @member {module:ui/editableui/inline/inlineeditableuiview~InlineEditableUIView}
 		 */
-		this.editable = new InlineEditableUIView( locale, editableElement );
+		this.editables = editables.map( item => {
+			const view = new InlineEditableUIView( locale, item.sourceElement );
+			view.name = item.name;
+			return view;
+		} );
 
 		// This toolbar may be placed anywhere in the page so things like font size need to be reset in it.
 		// Also because of the above, make sure the toolbar supports rounded corners.
@@ -68,13 +72,6 @@ export default class DecoupledEditorUIView extends EditorUIView {
 	render() {
 		super.render();
 
-		this.registerChild( [ this.toolbar, this.editable ] );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	get editableElement() {
-		return this.editable.element;
+		this.registerChild( [ this.toolbar ].concat( this.editables ) );
 	}
 }

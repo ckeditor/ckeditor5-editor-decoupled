@@ -8,25 +8,26 @@
  */
 
 import Editor from '@ckeditor/ckeditor5-core/src/editor/editor';
-import DataApiMixin from '@ckeditor/ckeditor5-core/src/editor/utils/dataapimixin';
 import HtmlDataProcessor from '@ckeditor/ckeditor5-engine/src/dataprocessor/htmldataprocessor';
+import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
 import DecoupledEditorUI from './decouplededitorui';
 import DecoupledEditorUIView from './decouplededitoruiview';
 import getDataFromElement from '@ckeditor/ckeditor5-utils/src/dom/getdatafromelement';
 import setDataInElement from '@ckeditor/ckeditor5-utils/src/dom/setdatainelement';
 import mix from '@ckeditor/ckeditor5-utils/src/mix';
+import log from '@ckeditor/ckeditor5-utils/src/log';
 import { isElement } from 'lodash-es';
 
 /**
  * The {@glink builds/guides/overview#decoupled-editor decoupled editor} implementation.
- * It provides an inline editable and a toolbar. However, unlike other editors,
+ * It provides an inline editables and a toolbar. However, unlike other editors,
  * it does not render these components anywhere in the DOM unless configured.
  *
  * This type of an editor is dedicated to integrations which require a customized UI with an open
  * structure, allowing developers to specify the exact location of the interface.
  *
- * See the document editor {@glink examples/builds/document-editor demo} to learn about possible use cases
- * for the decoupled editor.
+ * See the document editor {@glink examples/builds/document-editor demo} and multiple root editor
+ * {@glink examples/framework/multipleroot-editor demo} to learn about possible use cases for the decoupled editor.
  *
  * In order to create a decoupled editor instance, use the static
  * {@link module:editor-decoupled/decouplededitor~DecoupledEditor.create `DecoupledEditor.create()`} method.
@@ -57,23 +58,51 @@ export default class DecoupledEditor extends Editor {
 	 * {@link module:editor-decoupled/decouplededitor~DecoupledEditor.create `DecoupledEditor.create()`} method instead.
 	 *
 	 * @protected
-	 * @param {HTMLElement|String} sourceElementOrData The DOM element that will be the source for the created editor
+	 * @param {Object.<String,String|HTMLElement>} sourceElementsOrData The object where each key is the name
+	 * of the root and corresponding value is the DOM element that will be the source for the created editor
 	 * (on which the editor will be initialized) or initial data for the editor. For more information see
-	 * {@link module:editor-balloon/ballooneditor~BalloonEditor.create `BalloonEditor.create()`}.
+	 * {@link module:editor-decoupled/decouplededitor~DecoupledEditor.create `DecoupledEditor.create()`}.
 	 * @param {module:core/editor/editorconfig~EditorConfig} config The editor configuration.
 	 */
-	constructor( sourceElementOrData, config ) {
+	constructor( sourceElementsOrData, config ) {
 		super( config );
 
-		if ( isElement( sourceElementOrData ) ) {
-			this.sourceElement = sourceElementOrData;
-		}
+		/**
+		 * The array of all sourceElements (which becomes editable areas) if any were passed in `sourceElementsOrData`.
+		 *
+		 * @protected
+		 * @member {Array.<HTMLElement>}
+		 */
+		this._sourceElements = [];
+
+		/**
+		 * The array of all root names.
+		 *
+		 * @protected
+		 * @member {Array.<String>}
+		 */
+		this._rootNames = sourceElementsOrData ? Object.keys( sourceElementsOrData ) : [];
 
 		this.data.processor = new HtmlDataProcessor();
 
-		this.model.document.createRoot();
+		const editables = [];
 
-		this.ui = new DecoupledEditorUI( this, new DecoupledEditorUIView( this.locale, this.sourceElement ) );
+		for ( const name of this._rootNames ) {
+			const sourceElementOrData = sourceElementsOrData[ name ];
+
+			this.model.document.createRoot( '$root', name );
+
+			let sourceElement = null;
+
+			if ( isElement( sourceElementOrData ) ) {
+				sourceElement = sourceElementOrData;
+				this._sourceElements.push( sourceElement );
+			}
+
+			editables.push( { name, sourceElement } );
+		}
+
+		this.ui = new DecoupledEditorUI( this, new DecoupledEditorUIView( this.locale, editables ) );
 	}
 
 	/**
@@ -96,8 +125,8 @@ export default class DecoupledEditor extends Editor {
 	 *				// Remove the toolbar from DOM.
 	 *				editor.ui.view.toolbar.element.remove();
 	 *
-	 *				// Remove the editable from DOM.
-	 *				editor.ui.view.editable.element.remove();
+	 *				// Remove editables from DOM.
+	 *				editor.ui.view.editables.forEach( editable => editable.element.remove() );
 	 *
 	 *				console.log( 'Editor was destroyed' );
 	 *			} );
@@ -107,16 +136,105 @@ export default class DecoupledEditor extends Editor {
 	destroy() {
 		// Cache the data, then destroy.
 		// It's safe to assume that the model->view conversion will not work after super.destroy().
-		const data = this.getData();
+		const data = [];
+		for ( const rootName of this._rootNames ) {
+			data.push( this.getData( rootName ) );
+		}
 
 		this.ui.destroy();
 
 		return super.destroy()
 			.then( () => {
-				if ( this.sourceElement ) {
-					setDataInElement( this.sourceElement, data );
+				if ( this._sourceElements.length ) {
+					for ( let i = 0; i < this._rootNames.length; i++ ) {
+						setDataInElement( this._sourceElements[ i ], data[ i ] );
+					}
 				}
 			} );
+	}
+
+	/**
+	 * Gets the data from the editor.
+	 *
+	 *		editor.getData(); // -> '<p>This is editor!</p>'
+	 *		editor.getData( 'rootName' ); // -> '<h1>CKEditor 5</h1>'
+	 *
+	 * By default the editor outputs HTML. This can be controlled by injecting a different data processor.
+	 * See the {@glink features/markdown Markdown output} guide for more details.
+	 *
+	 * Note: Not only is the format of the data configurable, but the type of the `getData()`'s return value does not
+	 * have to be a string either. You can e.g. return an object or a DOM `DocumentFragment`  if you consider this
+	 * the right format for you.
+	 *
+	 * @method #getData
+	 * @param {String} [rootName='main'] The root name from which to get data.
+	 * @returns {String} Output data.
+	 */
+	getData( rootName = 'main' ) {
+		if ( !this._rootNames.includes( rootName ) ) {
+			/**
+			 * Thrown when there is an attempt to get data on a non-existing root.
+			 *
+			 * @error trying-to-get-data-on-non-existing-root
+			 */
+			throw new CKEditorError( 'trying-to-get-data-on-non-existing-root: ' +
+				`Attempting to get data from non-existing "${ rootName }" root.`
+			);
+		}
+
+		return this.data.get( rootName );
+	}
+
+	/**
+	 * Sets the data in the editor editable areas.
+	 *
+	 * There are couple of ways `setData` can be used. When only data is passed it is set on the default root (`main`):
+	 *
+	 *		editor.setData( '<h1>CKEditor 5</h1> ); // Sets data on a `main` root.
+	 *
+	 * Along with the data, object specifying root name can be passed:
+	 *
+	 *		editor.setData( '<p>This is editor!</p>', { rootName: 'content' } ); // Sets data on a `content` root.
+	 *
+	 * Finally, object specifying rootName - content pairs could be used:
+	 *
+	 *		editor.setData( { main: '<h1>CKEditor 5</h1>', content: '<p>This is editor!</p>' } ); // Sets data on `main` and `content` root.
+	 *
+	 * By default the editor accepts HTML. This can be controlled by injecting a different data processor.
+	 * See the {@glink features/markdown Markdown output} guide for more details.
+	 *
+	 * Note: Not only is the format of the data configurable, but the type of the `setData()`'s data values does not
+	 * have to be a string either. The data can be e.g. an object or a DOM `DocumentFragment` if you consider this
+	 * the right format for you.
+	 *
+	 * @method #setData
+	 * @param {String|Object.<String,String>} data Data as a sting or an object containing input data where each key
+	 * is the name of the root and corresponding value is a data to set.
+	 * @param {Object} [options] The options object specifying on which root to set data. Has effect only if first
+	 * parameter was passed as a string.
+	 */
+	setData( data, options ) {
+		let roots = {};
+
+		if ( data instanceof String ) {
+			const rootName = options && options.rootName ? options.rootName : 'main';
+			roots[ rootName ] = data;
+		} else {
+			roots = options;
+		}
+
+		for ( const [ rootName, content ] of Object.entries( roots ) ) {
+			if ( !this._rootNames.includes( rootName ) ) {
+				/**
+				 * Thrown when there is an attempt to set data on a non-existing root.
+				 *
+				 * @error trying-to-set-data-on-non-existing-root
+				 */
+				log.warn( `trying-to-set-data-on-non-existing-root: Attempting to set data on non-existing "${ rootName }" root.` );
+			} else {
+				this.data.set( rootName, content );
+			}
+		}
 	}
 
 	/**
@@ -159,7 +277,7 @@ export default class DecoupledEditor extends Editor {
 	 *				console.error( err.stack );
 	 *			} );
 	 *
-	 * **Note**: It is possible to create the editor out of a pure data string. The editor will then render
+	 * It is possible to create the editor out of a pure data string. The editor will then render
 	 * an editable element that must be inserted into the DOM for the editor to work properly:
 	 *
 	 *		DecoupledEditor
@@ -169,7 +287,7 @@ export default class DecoupledEditor extends Editor {
 	 *				document.body.appendChild( editor.ui.view.toolbar.element );
 	 *
 	 *				// Append the editable to the <body> element.
-	 *				document.body.appendChild( editor.ui.view.editable.element );
+	 *				document.body.appendChild( editor.ui.view.editables[ 0 ].element );
 	 *
 	 *				console.log( 'Editor was initialized', editor );
 	 *			} )
@@ -177,22 +295,63 @@ export default class DecoupledEditor extends Editor {
 	 *				console.error( err.stack );
 	 *			} );
 	 *
-	 * @param {HTMLElement|String} sourceElementOrData The DOM element that will be the source for the created editor
-	 * (on which the editor will be initialized) or initial data for the editor.
+	 * Since decoupled editor supports multiple roots, it can be created by passing object containing `rootName` - DOM
+	 * element pairs:
 	 *
-	 * If a source element is passed, then its contents will be automatically
-	 * {@link module:editor-decoupled/decouplededitor~DecoupledEditor#setData loaded} to the editor on startup and the element
-	 * itself will be used as the editor's editable element.
+	 *		DecoupledEditor
+	 *			.create( {
+	 *				title: document.querySelector( '#editor-title' ),
+	 *				content: document.querySelector( '#editor-content' )
+	 *			} )
+	 *			.then( editor => {
+	 *				// Append the toolbar to the <body> element.
+	 *				document.body.appendChild( editor.ui.view.toolbar.element );
 	 *
-	 * If data is provided, then `editor.ui.view.editable.element` will be created automatically and needs to be added
-	 * to the DOM manually.
+	 *				console.log( 'Editor was initialized', editor );
+	 *			} )
+	 *			.catch( err => {
+	 *				console.error( err.stack );
+	 *			} );
+	 *
+	 * or a `rootName` - initial data pairs:
+	 *
+	 *		DecoupledEditor
+	 *			.create( {
+	 *				title: '<h1>Multiple root editor</h1>',
+	 *				content: '<p>Second editor root.</p>'
+	 *			} )
+	 *			.then( editor => {
+	 *				// Append the toolbar to the <body> element.
+	 *				document.body.appendChild( editor.ui.view.toolbar.element );
+	 *
+	 *				// Append the editables to the <body> element.
+	 *				editor.ui.view.editables.forEach( editable => document.body.appendChild( editable.element ) );
+	 *
+	 *				console.log( 'Editor was initialized', editor );
+	 *			} )
+	 *			.catch( err => {
+	 *				console.error( err.stack );
+	 *			} );
+	 *
+	 * @param {HTMLElement|String|Object.<String,HTMLElement|String>} sourceElementOrData The DOM element that will
+	 * be the source for the created editor (on which the editor will be initialized), initial data for the editor
+	 * or an object containing rootName - DOM element or rootName - initial data pairs for creating multiple root editor.
+	 *
+	 * If a source elements are passed (directly or in the object param), then its contents will be automatically
+	 * {@link module:editor-decoupled/decouplededitor~DecoupledEditor#setData loaded} to the editor on startup and the elements
+	 * itself will be used as the editor's editable elements.
+	 *
+	 * If data is provided, then the `editor.ui.view.editables` array will be created automatically and each root
+	 * (e.g. `editor.ui.view.editables[ 0 ].element`) needs to be added to the DOM manually.
 	 * @param {module:core/editor/editorconfig~EditorConfig} config The editor configuration.
 	 * @returns {Promise} A promise resolved once the editor is ready.
 	 * The promise returns the created {@link module:editor-decoupled/decouplededitor~DecoupledEditor} instance.
 	 */
-	static create( sourceElementOrData, config ) {
+	static create( sourceElementsOrData, config ) {
+		const newSourceElementsOrData = handleSingleInput( sourceElementsOrData );
+
 		return new Promise( resolve => {
-			const editor = new this( sourceElementOrData, config );
+			const editor = new this( newSourceElementsOrData, config );
 
 			resolve(
 				editor.initPlugins()
@@ -201,11 +360,25 @@ export default class DecoupledEditor extends Editor {
 						editor.fire( 'uiReady' );
 					} )
 					.then( () => {
-						const initialData = isElement( sourceElementOrData ) ?
-							getDataFromElement( sourceElementOrData ) :
-							sourceElementOrData;
+						const initElementsData = [];
+						const names = Object.keys( newSourceElementsOrData );
 
-						return editor.data.init( initialData );
+						for ( const name of names ) {
+							const sourceElementOrData = newSourceElementsOrData[ name ];
+							const initialData = isElement( sourceElementOrData ) ?
+								getDataFromElement( sourceElementOrData ) :
+								sourceElementOrData;
+
+							// Do not use `editor.data.set( initialData, rootName )` in a loop, because first `#set` call
+							// will empty all others root so data cannot be retrieved from them.
+							initElementsData.push( { initialData, name } );
+						}
+
+						// Initiating data on one root changes document version and then when setting on another
+						// error is thrown, see engine/controller/datacontroller#init. Instead engine/controller/datacontroller#set
+						// can be used however I'm not sure how it plays with undo (it uses `transparent` batch so no undo
+						// step should be created).
+						return Promise.all( initElementsData.map( item => editor.data.set( item.initialData, item.name ) ) );
 					} )
 					.then( () => {
 						editor.fire( 'dataReady' );
@@ -217,4 +390,12 @@ export default class DecoupledEditor extends Editor {
 	}
 }
 
-mix( DecoupledEditor, DataApiMixin );
+function handleSingleInput( sourceElementOrData ) {
+	if ( typeof sourceElementOrData === 'string' || isElement( sourceElementOrData ) ) {
+		return { main: sourceElementOrData };
+	}
+
+	return sourceElementOrData;
+}
+
+mix( DecoupledEditor );
