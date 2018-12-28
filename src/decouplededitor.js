@@ -216,7 +216,7 @@ export default class DecoupledEditor extends Editor {
 	setData( data, options ) {
 		let roots = {};
 
-		if ( data instanceof String ) {
+		if ( typeof data === 'string' ) {
 			const rootName = options && options.rootName ? options.rootName : 'main';
 			roots[ rootName ] = data;
 		} else {
@@ -232,7 +232,7 @@ export default class DecoupledEditor extends Editor {
 				 */
 				log.warn( `trying-to-set-data-on-non-existing-root: Attempting to set data on non-existing "${ rootName }" root.` );
 			} else {
-				this.data.set( rootName, content );
+				this.data.set( content, rootName );
 			}
 		}
 	}

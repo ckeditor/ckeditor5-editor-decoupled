@@ -28,8 +28,9 @@ export default class DecoupledEditorUIView extends EditorUIView {
 	 * Creates an instance of the decoupled editor UI view.
 	 *
 	 * @param {module:utils/locale~Locale} locale The {@link module:core/editor/editor~Editor#locale} instance.
-	 * @param {HTMLElement} [editableElement] The editable element. If not specified, it will be automatically created by
-	 * {@link module:ui/editableui/editableuiview~EditableUIView}. Otherwise, the given element will be used.
+	 * @param {Array.<Object>} editables The array of editable elements. Each item should be an
+	 * object containing `name` and `sourceElement`. If `sourceElement` is not specified, it will be automatically
+	 * created by {@link module:ui/editableui/editableuiview~EditableUIView}. Otherwise, the given element will be used.
 	 */
 	constructor( locale, editables ) {
 		super( locale );

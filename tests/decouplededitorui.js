@@ -50,22 +50,22 @@ describe( 'DecoupledEditorUI', () => {
 		} );
 
 		describe( 'editable', () => {
-			it( 'registers view.editable#element in editor focus tracker', () => {
+			it( 'registers view.editables[ 0 ]#element in editor focus tracker', () => {
 				ui.focusTracker.isFocused = false;
 
-				view.editable.element.dispatchEvent( new Event( 'focus' ) );
+				view.editables[ 0 ].element.dispatchEvent( new Event( 'focus' ) );
 				expect( ui.focusTracker.isFocused ).to.true;
 			} );
 
 			it( 'sets view.editable#name', () => {
 				const editable = editor.editing.view.document.getRoot();
 
-				expect( view.editable.name ).to.equal( editable.rootName );
+				expect( view.editables[ 0 ].name ).to.equal( editable.rootName );
 			} );
 
 			it( 'binds view.editable#isFocused', () => {
 				utils.assertBinding(
-					view.editable,
+					view.editables[ 0 ],
 					{ isFocused: false },
 					[
 						[ editor.editing.view.document, { isFocused: true } ]
@@ -78,7 +78,7 @@ describe( 'DecoupledEditorUI', () => {
 				const editable = editor.editing.view.document.getRoot();
 
 				utils.assertBinding(
-					view.editable,
+					view.editables[ 0 ],
 					{ isReadOnly: false },
 					[
 						[ editable, { isReadOnly: true } ]
@@ -88,7 +88,7 @@ describe( 'DecoupledEditorUI', () => {
 			} );
 
 			it( 'attaches editable UI as view\'s DOM root', () => {
-				expect( editor.editing.view.getDomRoot() ).to.equal( view.editable.element );
+				expect( editor.editing.view.getDomRoot() ).to.equal( view.editables[ 0 ].element );
 			} );
 		} );
 
@@ -167,7 +167,7 @@ class VirtualDecoupledTestEditor extends VirtualTestEditor {
 	constructor( config ) {
 		super( config );
 
-		const view = new DecoupledEditorUIView( this.locale );
+		const view = new DecoupledEditorUIView( this.locale, [ { name: 'main' } ] );
 		this.ui = new DecoupledEditorUI( this, view );
 
 		this.ui.componentFactory.add( 'foo', viewCreator( 'foo' ) );

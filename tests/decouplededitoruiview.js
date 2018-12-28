@@ -15,7 +15,7 @@ describe( 'DecoupledEditorUIView', () => {
 
 	beforeEach( () => {
 		locale = new Locale( 'en' );
-		view = new DecoupledEditorUIView( locale );
+		view = new DecoupledEditorUIView( locale, [ { name: 'main' } ] );
 	} );
 
 	describe( 'constructor()', () => {
@@ -40,24 +40,24 @@ describe( 'DecoupledEditorUIView', () => {
 
 		describe( '#editable', () => {
 			it( 'is created', () => {
-				expect( view.editable ).to.be.instanceof( InlineEditableUIView );
+				expect( view.editables[ 0 ] ).to.be.instanceof( InlineEditableUIView );
 			} );
 
 			it( 'is given a locale object', () => {
-				expect( view.editable.locale ).to.equal( locale );
+				expect( view.editables[ 0 ].locale ).to.equal( locale );
 			} );
 
 			it( 'is not rendered', () => {
-				expect( view.editable.isRendered ).to.be.false;
+				expect( view.editables[ 0 ].isRendered ).to.be.false;
 			} );
 
 			it( 'can be created out of an existing DOM element', () => {
 				const editableElement = document.createElement( 'div' );
-				const testView = new DecoupledEditorUIView( locale, editableElement );
+				const testView = new DecoupledEditorUIView( locale, [ { name: 'main', sourceElement: editableElement } ] );
 
 				testView.render();
 
-				expect( testView.editable.element ).to.equal( editableElement );
+				expect( testView.editables[ 0 ].element ).to.equal( editableElement );
 
 				testView.destroy();
 			} );
@@ -100,7 +100,7 @@ describe( 'DecoupledEditorUIView', () => {
 
 		it( 'destroys #toolbar and #editable', () => {
 			const toolbarSpy = sinon.spy( view.toolbar, 'destroy' );
-			const editableSpy = sinon.spy( view.editable, 'destroy' );
+			const editableSpy = sinon.spy( view.editables[ 0 ], 'destroy' );
 
 			view.destroy();
 
@@ -110,12 +110,15 @@ describe( 'DecoupledEditorUIView', () => {
 
 		it( 'does not touch the toolbar#element and editable#element by default', () => {
 			document.body.appendChild( view.toolbar.element );
-			document.body.appendChild( view.editable.element );
+			document.body.appendChild( view.editables[ 0 ].element );
+
+			expect( view.toolbar.element.parentElement ).to.equal( document.body );
+			expect( view.editables[ 0 ].element.parentElement ).to.equal( document.body );
 
 			view.destroy();
 
 			expect( view.toolbar.element.parentElement ).to.equal( document.body );
-			expect( view.editable.element.parentElement ).to.equal( document.body );
+			expect( view.editables[ 0 ].element.parentElement ).to.equal( document.body );
 
 			view.toolbar.element.remove();
 			view.editable.element.remove();
@@ -125,7 +128,7 @@ describe( 'DecoupledEditorUIView', () => {
 	describe( 'editableElement', () => {
 		it( 'returns editable\'s view element', () => {
 			view.render();
-			expect( view.editableElement.getAttribute( 'contentEditable' ) ).to.equal( 'true' );
+			expect( view.editables[ 0 ].editableElement.getAttribute( 'contentEditable' ) ).to.equal( 'true' );
 			view.destroy();
 		} );
 	} );

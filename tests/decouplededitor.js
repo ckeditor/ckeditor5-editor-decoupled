@@ -28,19 +28,32 @@ describe( 'DecoupledEditor', () => {
 
 	describe( 'constructor()', () => {
 		beforeEach( () => {
-			editor = new DecoupledEditor();
+			editor = new DecoupledEditor( { main: '' } );
 		} );
 
 		it( 'uses HTMLDataProcessor', () => {
 			expect( editor.data.processor ).to.be.instanceof( HtmlDataProcessor );
 		} );
 
-		it( 'has a Data Interface', () => {
-			expect( testUtils.isMixed( DecoupledEditor, DataApiMixin ) ).to.be.true;
+		it( 'does not have a Data Interface', () => {
+			expect( testUtils.isMixed( DecoupledEditor, DataApiMixin ) ).to.be.false;
+		} );
+
+		it( 'provides getData method', () => {
+			expect( editor.getData ).to.be.instanceof( Function );
+		} );
+
+		it( 'provides setData method', () => {
+			expect( editor.setData ).to.be.instanceof( Function );
 		} );
 
 		it( 'implements the EditorWithUI interface', () => {
 			expect( editor.element ).to.be.null;
+		} );
+
+		it( 'does not create main root element with empty constructor', () => {
+			const editor = new DecoupledEditor();
+			expect( editor.model.document.getRoot( 'main' ) ).to.be.null;
 		} );
 
 		it( 'creates main root element', () => {
