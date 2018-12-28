@@ -5,7 +5,7 @@
 
 /* globals console:false, document, window */
 
-import MultiRootEditor from '../../src/multirooteditor';
+import DecoupledEditor from '../../src/decouplededitor';
 import Essentials from '@ckeditor/ckeditor5-essentials/src/essentials';
 import Heading from '@ckeditor/ckeditor5-heading/src/heading';
 import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
@@ -22,7 +22,7 @@ import testUtils from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
 let editor, observer;
 
 function initEditor() {
-	MultiRootEditor
+	DecoupledEditor
 		.create( {
 			title: document.querySelector( '.editable-container.title > div' ),
 			c1: document.querySelector( '.editable-container.c1 > div' ),

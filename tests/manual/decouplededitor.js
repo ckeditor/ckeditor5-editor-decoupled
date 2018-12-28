@@ -28,8 +28,10 @@ function initEditor() {
 			console.log( 'Editor was initialized', newEditor );
 			console.log( 'You can now play with it using global `editor` and `editable` variables.' );
 
+			console.log( newEditor );
+
 			document.querySelector( '.toolbar-container' ).appendChild( newEditor.ui.view.toolbar.element );
-			document.querySelector( '.editable-container' ).appendChild( newEditor.ui.view.editable.element );
+			document.querySelector( '.editable-container' ).appendChild( newEditor.ui.view.editables[ 0 ].element );
 
 			window.editor = editor = newEditor;
 			window.editable = editable = editor.editing.view.document.getRoot();
