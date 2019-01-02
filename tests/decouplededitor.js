@@ -16,6 +16,9 @@ import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
 import Bold from '@ckeditor/ckeditor5-basic-styles/src/bold';
 import DataApiMixin from '@ckeditor/ckeditor5-core/src/editor/utils/dataapimixin';
 import RootElement from '@ckeditor/ckeditor5-engine/src/model/rootelement';
+import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
+
+import log from '@ckeditor/ckeditor5-utils/src/log';
 
 import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
 
@@ -266,7 +269,7 @@ describe( 'DecoupledEditor', () => {
 		}
 	} );
 
-	describe( 'destroy', () => {
+	describe( 'destroy()', () => {
 		describe( 'editor with data', () => {
 			beforeEach( function() {
 				return DecoupledEditor
@@ -315,5 +318,79 @@ describe( 'DecoupledEditor', () => {
 					} );
 			} );
 		}
+	} );
+
+	describe( 'getData()', () => {
+		beforeEach( function() {
+			return DecoupledEditor
+				.create( { main: 'Foo', main2: 'Bar' }, { plugins: [ Paragraph ] } )
+				.then( newEditor => {
+					editor = newEditor;
+				} );
+		} );
+
+		it( 'should get data by default root name', () => {
+			expect( editor.getData() ).to.equal( '<p>Foo</p>' );
+		} );
+
+		it( 'should get data by specified root name', () => {
+			expect( editor.getData( 'main2' ) ).to.equal( '<p>Bar</p>' );
+		} );
+
+		it( 'should throw error when trying to get data from non existing root', () => {
+			expect( () => {
+				editor.getData( 'main3' );
+			} ).to.throw( CKEditorError, /trying-to-get-data-on-non-existing-root/ );
+		} );
+	} );
+
+	describe( 'setData()', () => {
+		beforeEach( function() {
+			return DecoupledEditor
+				.create( { main: '', main2: '' }, { plugins: [ Paragraph ] } )
+				.then( newEditor => {
+					editor = newEditor;
+				} );
+		} );
+
+		afterEach( () => {
+			testUtils.sinon.restore();
+		} );
+
+		it( 'should set data by default root name', () => {
+			editor.setData( 'Bar' );
+			expect( editor.getData() ).to.equal( '<p>Bar</p>' );
+		} );
+
+		it( 'should set data by specified root name', () => {
+			editor.setData( 'Foo', { rootName: 'main2' } );
+			expect( editor.getData( 'main2' ) ).to.equal( '<p>Foo</p>' );
+		} );
+
+		it( 'should set data by providing rootName - data object', () => {
+			editor.setData( { main: '12', main2: '34' } );
+			expect( editor.getData( 'main' ) ).to.equal( '<p>12</p>' );
+			expect( editor.getData( 'main2' ) ).to.equal( '<p>34</p>' );
+		} );
+
+		it( 'should log warning when trying to set data on non existing root #1', () => {
+			const warnSpy = testUtils.sinon.stub( log, 'warn' ).callsFake( () => {} );
+
+			editor.setData( 'Baz', { rootName: 'main3' } );
+
+			expect( warnSpy.calledOnce ).to.true;
+			expect( warnSpy.calledWithMatch( /trying-to-set-data-on-non-existing-root/ ) ).to.true;
+		} );
+
+		it( 'should log warning when trying to set data on non existing root #2', () => {
+			const warnSpy = testUtils.sinon.stub( log, 'warn' ).callsFake( () => {} );
+
+			editor.setData( { main: 'Baz1', main3: 'Baz2' } );
+
+			expect( editor.getData( 'main' ) ).to.equal( '<p>Baz1</p>' );
+
+			expect( warnSpy.calledOnce ).to.true;
+			expect( warnSpy.calledWithMatch( /trying-to-set-data-on-non-existing-root/ ) ).to.true;
+		} );
 	} );
 } );

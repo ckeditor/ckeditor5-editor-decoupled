@@ -88,7 +88,7 @@ describe( 'DecoupledEditorUIView', () => {
 		describe( '#editable', () => {
 			it( 'is rendered but gets no parent', () => {
 				expect( view.isRendered ).to.be.true;
-				expect( view.editable.element.parentElement ).to.be.null;
+				expect( view.editables[ 0 ].element.parentElement ).to.be.null;
 			} );
 		} );
 	} );
@@ -121,7 +121,7 @@ describe( 'DecoupledEditorUIView', () => {
 			expect( view.editables[ 0 ].element.parentElement ).to.equal( document.body );
 
 			view.toolbar.element.remove();
-			view.editable.element.remove();
+			view.editables[ 0 ].element.remove();
 		} );
 	} );
 
