@@ -1,0 +1,36 @@
+<div class="multiroot-editor">
+	<div class="multiroot-editor__toolbar"></div>
+	<div class="multiroot-editor__editable-container">
+		<div class="multiroot-editor__header">
+			<h1>Content Header</h1>
+		</div>
+
+		<div class="multiroot-editor__content">
+			<p>Foo Bar Baz</p>
+		</div>
+
+		<div class="multiroot-editor__footer">
+			<p><em>Content Footer</em></p>
+		</div>
+	</div>
+</div>
+
+<style>
+	.multiroot-editor__editable-container > div {
+		position: relative;
+		border: 1px solid #999;
+	}
+
+	.multiroot-editor__toolbar {
+		padding: 1em;
+	}
+
+	.multiroot-editor__header,
+	.multiroot-editor__content,
+	.multiroot-editor__footer {
+		padding: 3em;
+		overflow-y: scroll;
+		max-height: 300px;
+		margin-top: 25px;
+	}
+</style>
