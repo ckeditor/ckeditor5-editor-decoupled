@@ -14,7 +14,6 @@ import DecoupledEditorUI from './decouplededitorui';
 import DecoupledEditorUIView from './decouplededitoruiview';
 import getDataFromElement from '@ckeditor/ckeditor5-utils/src/dom/getdatafromelement';
 import setDataInElement from '@ckeditor/ckeditor5-utils/src/dom/setdatainelement';
-import mix from '@ckeditor/ckeditor5-utils/src/mix';
 import log from '@ckeditor/ckeditor5-utils/src/log';
 import { isElement } from 'lodash-es';
 
@@ -26,8 +25,8 @@ import { isElement } from 'lodash-es';
  * This type of an editor is dedicated to integrations which require a customized UI with an open
  * structure, allowing developers to specify the exact location of the interface.
  *
- * See the document editor {@glink examples/builds/document-editor demo} and multiple root editor
- * {@glink examples/framework/multipleroot-editor demo} to learn about possible use cases for the decoupled editor.
+ * See the {@glink examples/builds/document-editor document editor demo} and
+ * {@glink examples/framework/multipleroot-editor multiple-root editor demo} to learn about possible use cases for the decoupled editor.
  *
  * In order to create a decoupled editor instance, use the static
  * {@link module:editor-decoupled/decouplededitor~DecoupledEditor.create `DecoupledEditor.create()`} method.
@@ -46,7 +45,6 @@ import { isElement } from 'lodash-es';
  * Read more about initializing the editor from source or as a build in
  * {@link module:editor-decoupled/decouplededitor~DecoupledEditor.create `DecoupledEditor.create()`}.
  *
- * @mixes module:core/editor/utils/dataapimixin~DataApiMixin
  * @implements module:core/editor/editorwithui~EditorWithUI
  * @extends module:core/editor/editor~Editor
  */
@@ -58,8 +56,8 @@ export default class DecoupledEditor extends Editor {
 	 * {@link module:editor-decoupled/decouplededitor~DecoupledEditor.create `DecoupledEditor.create()`} method instead.
 	 *
 	 * @protected
-	 * @param {Object.<String,String|HTMLElement>} sourceElementsOrData The object where each key is the name
-	 * of the root and corresponding value is the DOM element that will be the source for the created editor
+	 * @param {Object.<String,String>|Object.<String,HTMLElement>} sourceElementsOrData The object where each key
+	 * is the name of the root and corresponding value is the DOM element that will be the source for the created editor
 	 * (on which the editor will be initialized) or initial data for the editor. For more information see
 	 * {@link module:editor-decoupled/decouplededitor~DecoupledEditor.create `DecoupledEditor.create()`}.
 	 * @param {module:core/editor/editorconfig~EditorConfig} config The editor configuration.
@@ -117,7 +115,7 @@ export default class DecoupledEditor extends Editor {
 	/**
 	 * Destroys the editor instance, releasing all resources used by it.
 	 *
-	 * **Note**: The decoupled editor does not remove the toolbar and editable when destroyed. You can
+	 * **Note**: The decoupled editor does not remove the toolbar and editables when destroyed. You can
 	 * do that yourself in the destruction chain:
 	 *
 	 *		editor.destroy()
@@ -190,13 +188,13 @@ export default class DecoupledEditor extends Editor {
 	 *
 	 * There are couple of ways `setData` can be used. When only data is passed it is set on the default root (`main`):
 	 *
-	 *		editor.setData( '<h1>CKEditor 5</h1> ); // Sets data on a `main` root.
+	 *		editor.setData( '<h1>CKEditor 5</h1>' ); // Sets data on the `main` root.
 	 *
 	 * Along with the data, object specifying root name can be passed:
 	 *
-	 *		editor.setData( '<p>This is editor!</p>', { rootName: 'content' } ); // Sets data on a `content` root.
+	 *		editor.setData( '<p>This is editor!</p>', { rootName: 'content' } ); // Sets data on the `content` root.
 	 *
-	 * Finally, object specifying rootName - content pairs could be used:
+	 * Finally, object specifying `rootName` - `data` pairs could be used:
 	 *
 	 *		editor.setData( { main: '<h1>CKEditor 5</h1>', content: '<p>This is editor!</p>' } ); // Sets data on `main` and `content` root.
 	 *
@@ -211,7 +209,7 @@ export default class DecoupledEditor extends Editor {
 	 * @param {String|Object.<String,String>} data Data as a sting or an object containing input data where each key
 	 * is the name of the root and corresponding value is a data to set.
 	 * @param {Object} [options] The options object specifying on which root to set data. Has effect only if first
-	 * parameter was passed as a string.
+	 * parameter is passed as a string.
 	 */
 	setData( data, options ) {
 		let roots = {};
@@ -295,8 +293,8 @@ export default class DecoupledEditor extends Editor {
 	 *				console.error( err.stack );
 	 *			} );
 	 *
-	 * Since decoupled editor supports multiple roots, it can be created by passing object containing `rootName` - DOM
-	 * element pairs:
+	 * Since decoupled editor supports multiple roots, it can be created by passing object containing `rootName` - `DOM
+	 * element` pairs:
 	 *
 	 *		DecoupledEditor
 	 *			.create( {
@@ -313,7 +311,7 @@ export default class DecoupledEditor extends Editor {
 	 *				console.error( err.stack );
 	 *			} );
 	 *
-	 * or a `rootName` - initial data pairs:
+	 * or a `rootName` - `initial data` pairs:
 	 *
 	 *		DecoupledEditor
 	 *			.create( {
@@ -333,11 +331,11 @@ export default class DecoupledEditor extends Editor {
 	 *				console.error( err.stack );
 	 *			} );
 	 *
-	 * @param {HTMLElement|String|Object.<String,HTMLElement|String>} sourceElementOrData The DOM element that will
-	 * be the source for the created editor (on which the editor will be initialized), initial data for the editor
-	 * or an object containing rootName - DOM element or rootName - initial data pairs for creating multiple root editor.
+	 * @param {HTMLElement|String|Object.<String,String>|Object.<String,HTMLElement>} sourceElementOrData The DOM element
+	 * that will be the source for the created editor (on which the editor will be initialized), initial data for the editor
+	 * or an object containing `rootName` - `DOM element` or `rootName` - `initial data` pairs for creating multiple root editor.
 	 *
-	 * If a source elements are passed (directly or in the object param), then its contents will be automatically
+	 * If a source elements are passed (directly or in the object parameter), then its contents will be automatically
 	 * {@link module:editor-decoupled/decouplededitor~DecoupledEditor#setData loaded} to the editor on startup and the elements
 	 * itself will be used as the editor's editable elements.
 	 *
@@ -391,5 +389,3 @@ function handleSingleInput( sourceElementOrData ) {
 
 	return sourceElementOrData;
 }
-
-mix( DecoupledEditor );

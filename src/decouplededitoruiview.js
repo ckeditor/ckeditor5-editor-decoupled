@@ -14,7 +14,7 @@ import Template from '@ckeditor/ckeditor5-ui/src/template';
 
 /**
  * The decoupled editor UI view. It is a virtual view providing an inline
- * {@link module:editor-decoupled/decouplededitoruiview~DecoupledEditorUIView#editable editables} and a
+ * {@link module:editor-decoupled/decouplededitoruiview~DecoupledEditorUIView#editables editables} and a
  * {@link module:editor-decoupled/decouplededitoruiview~DecoupledEditorUIView#toolbar}, but without any
  * specific arrangement of the components in the DOM.
  *
