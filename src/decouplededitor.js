@@ -360,7 +360,7 @@ export default class DecoupledEditor extends Editor {
 						editor.fire( 'uiReady' );
 					} )
 					.then( () => {
-						const data = [];
+						const data = {};
 						const names = Object.keys( newSourceElementsOrData );
 
 						for ( const name of names ) {
@@ -369,7 +369,7 @@ export default class DecoupledEditor extends Editor {
 								getDataFromElement( sourceElementOrData ) :
 								sourceElementOrData;
 
-							data.push( { name, data: initialData } );
+							data[ name ] = initialData;
 						}
 
 						return editor.data.init( data );
