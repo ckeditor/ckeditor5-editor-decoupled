@@ -1,0 +1,69 @@
+<div class="toolbar-container" data-name="Toolbar"></div>
+
+<div class="editable-container header" data-name="Header">
+	<div>
+		<h1>Content Header</h1>
+	</div>
+</div>
+
+<div class="editable-container content" data-name="Content">
+	<div>
+		<p>Foo Bar Baz</p>
+	</div>
+</div>
+
+<div class="editable-container footer" data-name="Footer">
+	<div>
+		<p><em>Content Footer</em></p>
+	</div>
+</div>
+
+<style>
+	.editable-container,
+	.toolbar-container {
+		position: relative;
+		border: 1px solid red;
+	}
+
+	.editable-container::before,
+	.toolbar-container::before {
+		content: attr(data-name);
+		position: absolute;
+		background: blue;
+		color: #fff;
+		top: 0;
+		left: 0;
+		font: 10px/2 monospace;
+		padding: .1em .3em;
+	}
+
+	.toolbar-container{
+		padding: 1em;
+	}
+
+	.editable-container {
+		padding: 3em;
+		overflow-y: scroll;
+		max-height: 300px;
+		margin-top: 25px;
+	}
+
+	.editable-container:not(.title) .ck-editor__editable {
+		min-height: 21cm;
+		padding: 2em;
+		border: 1px #D3D3D3 solid;
+		border-radius: var(--ck-border-radius);
+		background: white;
+		box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+	}
+
+	.wrapper {
+		width: 49%;
+		float: left;
+		margin-right: 2%;
+	}
+
+	.wrapper + .wrapper {
+		margin-right: 0;
+	}
+</style>
