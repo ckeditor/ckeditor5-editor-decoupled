@@ -220,7 +220,7 @@ export default class DecoupledEditor extends Editor {
 			const rootName = options && options.rootName ? options.rootName : 'main';
 			roots[ rootName ] = data;
 		} else {
-			roots = options;
+			roots = data;
 		}
 
 		for ( const [ rootName, content ] of Object.entries( roots ) ) {
@@ -360,7 +360,7 @@ export default class DecoupledEditor extends Editor {
 						editor.fire( 'uiReady' );
 					} )
 					.then( () => {
-						const initElementsData = [];
+						const data = [];
 						const names = Object.keys( newSourceElementsOrData );
 
 						for ( const name of names ) {
@@ -369,16 +369,10 @@ export default class DecoupledEditor extends Editor {
 								getDataFromElement( sourceElementOrData ) :
 								sourceElementOrData;
 
-							// Do not use `editor.data.set( initialData, rootName )` in a loop, because first `#set` call
-							// will empty all others root so data cannot be retrieved from them.
-							initElementsData.push( { initialData, name } );
+							data.push( { name, data: initialData } );
 						}
 
-						// Initiating data on one root changes document version and then when setting on another
-						// error is thrown, see engine/controller/datacontroller#init. Instead engine/controller/datacontroller#set
-						// can be used however I'm not sure how it plays with undo (it uses `transparent` batch so no undo
-						// step should be created).
-						return Promise.all( initElementsData.map( item => editor.data.set( item.initialData, item.name ) ) );
+						return editor.data.init( data );
 					} )
 					.then( () => {
 						editor.fire( 'dataReady' );
