@@ -25,8 +25,7 @@ import { isElement } from 'lodash-es';
  * This type of an editor is dedicated to integrations which require a customized UI with an open
  * structure, allowing developers to specify the exact location of the interface.
  *
- * See the {@glink examples/builds/document-editor document editor demo} and
- * {@glink examples/framework/multipleroot-editor multiple-root editor demo} to learn about possible use cases for the decoupled editor.
+ * See the {@glink examples/builds/document-editor document editor demo} to learn about possible use cases for the decoupled editor.
  *
  * In order to create a decoupled editor instance, use the static
  * {@link module:editor-decoupled/decouplededitor~DecoupledEditor.create `DecoupledEditor.create()`} method.
