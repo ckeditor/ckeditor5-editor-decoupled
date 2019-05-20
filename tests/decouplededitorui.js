@@ -52,6 +52,14 @@ describe( 'DecoupledEditorUI', () => {
 			expect( view.isRendered ).to.be.true;
 		} );
 
+		it( 'renders accessibility label for toolbar', () => {
+			const labelEl = view.toolbar.element.lastChild;
+
+			expect( labelEl.tagName ).to.equal( 'SPAN' );
+			expect( labelEl.classList.contains( 'ck-toolbar__label' ) ).to.be.true;
+			expect( labelEl.innerText ).to.equal( 'Editor\'s toolbar' );
+		} );
+
 		describe( 'editable', () => {
 			it( 'registers view.editable#element in editor focus tracker', () => {
 				ui.focusTracker.isFocused = false;
