@@ -116,6 +116,8 @@ export default class DecoupledEditorUI extends EditorUI {
 
 		toolbar.fillFromConfig( this._toolbarConfig.items, this.componentFactory );
 
+		toolbar.label = editor.t( this._toolbarConfig.label );
+
 		enableToolbarKeyboardFocus( {
 			origin: editor.editing.view,
 			originFocusTracker: this.focusTracker,
