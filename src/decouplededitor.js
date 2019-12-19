@@ -199,16 +199,16 @@ export default class DecoupledEditor extends Editor {
 	 * @returns {Promise} A promise resolved once the editor is ready. The promise resolves with the created editor instance.
 	 */
 	static create( sourceElementOrData, config = {} ) {
-		return new Promise( resolve => {
-			if ( sourceElementOrData && sourceElementOrData.tagName && sourceElementOrData.tagName === 'TEXTAREA' ) {
-				// Documented in core/editor/editor.js
-				throw new CKEditorError(
-					'editor-wrong-element: This type of editor cannot be initialized inside a <textarea> element.',
-					null );
-			}
-
-			resolve( new EditorFactory().create( this, sourceElementOrData, config ) );
-		} );
+		return Promise.resolve()
+			.then( () => {
+				if ( sourceElementOrData && sourceElementOrData.tagName && sourceElementOrData.tagName === 'TEXTAREA' ) {
+					// Documented in core/editor/editor.js
+					throw new CKEditorError(
+						'editor-wrong-element: This type of editor cannot be initialized inside a <textarea> element.',
+						null );
+				}
+			} )
+			.then( () => new EditorFactory().create( this, sourceElementOrData, config ) );
 	}
 }
 
