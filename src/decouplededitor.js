@@ -8,16 +8,12 @@
  */
 
 import Editor from '@ckeditor/ckeditor5-core/src/editor/editor';
-import DataApiMixin from '@ckeditor/ckeditor5-core/src/editor/utils/dataapimixin';
-import HtmlDataProcessor from '@ckeditor/ckeditor5-engine/src/dataprocessor/htmldataprocessor';
+import EditorFactory from '@ckeditor/ckeditor5-core/src/editor/editorfactory';
 import DecoupledEditorUI from './decouplededitorui';
 import DecoupledEditorUIView from './decouplededitoruiview';
-import getDataFromElement from '@ckeditor/ckeditor5-utils/src/dom/getdatafromelement';
-import setDataInElement from '@ckeditor/ckeditor5-utils/src/dom/setdatainelement';
+import DataApiMixin from '@ckeditor/ckeditor5-core/src/editor/utils/dataapimixin';
 import mix from '@ckeditor/ckeditor5-utils/src/mix';
-import { isElement } from 'lodash-es';
 import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
-import secureSourceElement from '@ckeditor/ckeditor5-core/src/editor/utils/securesourceelement';
 
 /**
  * The {@glink builds/guides/overview#document-editor decoupled editor} implementation.
@@ -67,15 +63,6 @@ export default class DecoupledEditor extends Editor {
 	constructor( sourceElementOrData, config ) {
 		super( config );
 
-		if ( isElement( sourceElementOrData ) ) {
-			this.sourceElement = sourceElementOrData;
-			secureSourceElement( this );
-		}
-
-		this.data.processor = new HtmlDataProcessor( this.data.viewDocument );
-
-		this.model.document.createRoot();
-
 		const shouldToolbarGroupWhenFull = !this.config.get( 'toolbar.shouldNotGroupWhenFull' );
 		const view = new DecoupledEditorUIView( this.locale, this.editing.view, {
 			editableElement: this.sourceElement,
@@ -105,18 +92,9 @@ export default class DecoupledEditor extends Editor {
 	 * @returns {Promise}
 	 */
 	destroy() {
-		// Cache the data, then destroy.
-		// It's safe to assume that the model->view conversion will not work after super.destroy().
-		const data = this.getData();
-
-		this.ui.destroy();
-
-		return super.destroy()
-			.then( () => {
-				if ( this.sourceElement ) {
-					setDataInElement( this.sourceElement, data );
-				}
-			} );
+		return new EditorFactory()
+			.destroy( this )
+			.then( () => super.destroy() );
 	}
 
 	/**
@@ -222,44 +200,16 @@ export default class DecoupledEditor extends Editor {
 	 */
 	static create( sourceElementOrData, config = {} ) {
 		return new Promise( resolve => {
-			const isHTMLElement = isElement( sourceElementOrData );
-
-			if ( isHTMLElement && sourceElementOrData.tagName === 'TEXTAREA' ) {
+			if ( sourceElementOrData && sourceElementOrData.tagName && sourceElementOrData.tagName === 'TEXTAREA' ) {
 				// Documented in core/editor/editor.js
 				throw new CKEditorError(
-					'editor-wrong-element: This type of editor cannot be initialized inside <textarea> element.', null );
+					'editor-wrong-element: This type of editor cannot be initialized inside a <textarea> element.',
+					null );
 			}
 
-			const editor = new this( sourceElementOrData, config );
-
-			resolve(
-				editor.initPlugins()
-					.then( () => {
-						editor.ui.init();
-					} )
-					.then( () => {
-						if ( !isHTMLElement && config.initialData ) {
-							// Documented in core/editor/editorconfig.jdoc.
-							throw new CKEditorError(
-								'editor-create-initial-data: ' +
-								'The config.initialData option cannot be used together with initial data passed in Editor.create().',
-								null
-							);
-						}
-
-						const initialData = config.initialData || getInitialData( sourceElementOrData );
-
-						return editor.data.init( initialData );
-					} )
-					.then( () => editor.fire( 'ready' ) )
-					.then( () => editor )
-			);
+			resolve( new EditorFactory().create( this, sourceElementOrData, config ) );
 		} );
 	}
 }
 
 mix( DecoupledEditor, DataApiMixin );
-
-function getInitialData( sourceElementOrData ) {
-	return isElement( sourceElementOrData ) ? getDataFromElement( sourceElementOrData ) : sourceElementOrData;
-}
