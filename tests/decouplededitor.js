@@ -94,7 +94,7 @@ describe( 'DecoupledEditor', () => {
 				sinon.assert.calledWith( spy.firstCall, 'asyncInit' );
 				sinon.assert.calledWith( spy.secondCall, 'ready' );
 
-				editor.destroy().then( done );
+				editor.destroy().then( () => done() );
 			} );
 
 			// Resolve init promise in next cycle to hold data initialization.
