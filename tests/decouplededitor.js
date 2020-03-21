@@ -131,18 +131,20 @@ describe( 'DecoupledEditor', () => {
 		it( 'should throw when trying to create the editor using the same source element more than once', done => {
 			const sourceElement = document.createElement( 'div' );
 
-			DecoupledEditor.create( sourceElement ).then( () => {
+			DecoupledEditor.create( sourceElement ).then( editor => {
 				DecoupledEditor.create( sourceElement )
 					.then(
 						() => {
 							expect.fail( 'Decoupled editor should not initialize on an element already used by other instance.' );
 						},
 						err => {
+							sourceElement.remove();
 							assertCKEditorError( err, /^editor-source-element-already-used/ );
 						}
 					)
-					.then( done )
-					.catch( done );
+					.then( () => editor.destroy() )
+					.then( () => done() )
+					.catch( () => done() );
 			} );
 		} );
 
